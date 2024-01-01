@@ -1,9 +1,6 @@
 #!/usr/bin/env python3
 """ Pagination module
 """
-#!/usr/bin/env python3
-""" Pagination module
-"""
 import csv
 import math
 from typing import Dict, List, Tuple
