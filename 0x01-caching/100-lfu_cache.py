@@ -1,53 +1,71 @@
-#!/usr/bin/env python3
-"""
-LFU caching module
-"""
+#!/usr/bin/python3
+""" LFU Caching """
+
 from base_caching import BaseCaching
-from typing import Any, Optional
 
 
 class LFUCache(BaseCaching):
-    """ LFU cache class
-    """
+    """ LFU caching """
+
     def __init__(self):
-        """ Initializes new instance
-        """
+        """ Constructor """
         super().__init__()
+        self.queue = []
         self.counter = {}
 
-    def put(self, key: Any, item: Any) -> None:
-        """ Adds data to cache based on LRU policy
-            - Args:
-                - key: new entry's key
-                - item: entry's value
-        """
-        if not key or not item:
+    def put(self, key, item):
+        """ Puts item in cache """
+        if key is None or item is None:
             return
-        counter = self.counter
-        new_cache_data = {key: item}
-        old_cache_data = self.cache_data.get(key)
-        if len(self.cache_data) == self.MAX_ITEMS and not old_cache_data:
-            key_to_remove = list(counter.keys())[0]
-            self.cache_data.pop(key_to_remove)
-            counter.pop(key_to_remove)
-            print(f'DISCARD: {key_to_remove}')
-        self.cache_data.update(new_cache_data)
-        counter.update({key: counter.get(key, 0) + 1})
-        counter = dict(sorted(counter.items(),
-                              key=lambda x: (x[1], x[0])))
 
-    def get(self, key: Any) -> Optional[Any]:
-        """ Gets cache data associated with given key
-            and updates dict in accordance to LFU policy
-            - Args:
-                - key to look for
-            - Return:
-                - value associated with the key
-        """
-        cache_item = self.cache_data.get(key)
-        counter = self.counter
-        if cache_item:
-            counter.update({key: counter.get(key) + 1})
-            counter = dict(sorted(counter.items(),
-                                  key=lambda x: (x[1], x[0])))
-        return cache_item
+        self.cache_data[key] = item
+
+        item_count = self.counter.get(key, None)
+
+        if item_count is not None:
+            self.counter[key] += 1
+        else:
+            self.counter[key] = 1
+
+        if len(self.cache_data) > BaseCaching.MAX_ITEMS:
+            first = self.get_first_list(self.queue)
+            if first:
+                self.queue.pop(0)
+                del self.cache_data[first]
+                del self.counter[first]
+                print("DISCARD: {}".format(first))
+
+        if key not in self.queue:
+            self.queue.insert(0, key)
+        self.mv_right_list(key)
+
+    def get(self, key):
+        """ Gets item from cache """
+        item = self.cache_data.get(key, None)
+        if item is not None:
+            self.counter[key] += 1
+            self.mv_right_list(key)
+        return item
+
+    def mv_right_list(self, item):
+        """ Moves element to the right, taking into account LFU """
+        length = len(self.queue)
+
+        idx = self.queue.index(item)
+        item_count = self.counter[item]
+
+        for i in range(idx, length):
+            if i != (length - 1):
+                nxt = self.queue[i + 1]
+                nxt_count = self.counter[nxt]
+
+                if nxt_count > item_count:
+                    break
+
+        self.queue.insert(i + 1, item)
+        self.queue.remove(item)
+
+    @staticmethod
+    def get_first_list(array):
+        """ Get first element of list or None """
+        return array[0] if array else None

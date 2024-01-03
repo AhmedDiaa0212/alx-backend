@@ -1,4 +1,4 @@
-#!/usr/bin/env python3
+#!/usr/bin/python3
 """ BaseCaching module
 """
 
@@ -10,7 +10,7 @@ class BaseCaching():
     MAX_ITEMS = 4
 
     def __init__(self):
-        """ Initialize
+        """ Initiliaze
         """
         self.cache_data = {}
 
